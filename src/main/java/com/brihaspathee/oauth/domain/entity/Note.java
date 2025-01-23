@@ -18,6 +18,7 @@ import lombok.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "note")
 public class Note {
 
     /**
@@ -26,7 +27,8 @@ public class Note {
      * associated with the Note entity and is auto-generated.
      */
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "note_id", nullable = false, updatable = false, columnDefinition = "bigint")
     private Long noteId;
 
     /**

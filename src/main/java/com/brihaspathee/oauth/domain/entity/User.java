@@ -52,7 +52,7 @@ public class User implements UserDetails {
      * in the database as a VARCHAR type with a maximum length of 100 characters.
      * The password is both insertable and updatable.
      */
-    @Column(name = "password", nullable = false, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
+    @Column(name = "password", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
     private String password;
 
     /**
@@ -70,7 +70,7 @@ public class User implements UserDetails {
      * The value is a non-null, immutable string with a maximum length of 100 characters.
      * This is intended to uniquely identify the user's GitHub account associated with the application.
      */
-    @Column(name = "github_id", nullable = false, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+    @Column(name = "github_id", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
     private String githubId;
 
     /**
@@ -79,7 +79,7 @@ public class User implements UserDetails {
      * The GitHub login is required, cannot be modified once set, and must be inserted at the time of creation.
      * The maximum length for this field is 100 characters.
      */
-    @Column(name = "github_login", nullable = false, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+    @Column(name = "github_login", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
     private String githubLogin;
 
     /**
@@ -88,7 +88,7 @@ public class User implements UserDetails {
      * with the user's GitHub account, enabling integration with external systems
      * or rendering the user's profile picture in the application.
      */
-    @Column(name = "github_avatar_url", nullable = false, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
+    @Column(name = "github_avatar_url", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
     private String githubAvatarUrl;
 
     /**

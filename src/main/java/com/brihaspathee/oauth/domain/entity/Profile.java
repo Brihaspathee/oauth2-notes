@@ -20,6 +20,7 @@ import java.time.LocalDate;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "profile")
 public class Profile {
 
     /**
@@ -29,8 +30,8 @@ public class Profile {
      * and cannot be updated. The value is mandatory for persistence.
      */
     @Id
-    @GeneratedValue
-    @Column(name = "profile_id", length = 50, columnDefinition = "number", updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "profile_id", columnDefinition = "bigint", updatable = false, nullable = false)
     private Long profileId;
 
     /**
@@ -38,7 +39,7 @@ public class Profile {
      * This field is a mandatory attribute, with a maximum length of 50 characters.
      * It can be updated after creation and must be provided during insertion.
      */
-    @Column(name = "first_name", length = 50, nullable = false, updatable = true, insertable = true)
+    @Column(name = "first_name", length = 100, columnDefinition = "varchar", nullable = false, updatable = true, insertable = true)
     private String firstName;
 
     /**
@@ -46,7 +47,7 @@ public class Profile {
      * This field is an optional attribute, with a maximum length of 50 characters.
      * It can be updated after creation and can also be omitted during insertion.
      */
-    @Column(length = 50, nullable = true, updatable = true, insertable = true)
+    @Column(length = 100, columnDefinition = "varchar", nullable = true, updatable = true, insertable = true)
     private String middleName;
 
     /**

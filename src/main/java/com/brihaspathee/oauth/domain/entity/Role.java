@@ -20,6 +20,7 @@ import java.util.Set;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "role")
 public class Role {
 
     /**

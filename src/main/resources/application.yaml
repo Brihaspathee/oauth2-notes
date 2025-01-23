@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: oauth2-notes
+  datasource:
+    url: jdbc:mysql://localhost:3306/oauth2notesdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: oauth2notesadmin
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        show_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23libw8ZK2MNnjaHA4
+            client-secret: 27aee3a53a7aa6a3fee43e682720ffd2ba420915
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE

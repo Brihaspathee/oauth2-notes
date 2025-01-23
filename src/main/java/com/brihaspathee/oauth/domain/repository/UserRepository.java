@@ -23,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return an Optional containing the user if found, or an empty Optional if no user exists with the given email
      */
     Optional<User> findUserByEmail(String email);
+
+    Optional<User> findUserByGithubId(String githubId);
 }
