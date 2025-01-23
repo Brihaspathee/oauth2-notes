@@ -47,7 +47,7 @@ public class Note {
      * The field is both insertable and updatable, allowing modifications and additions.
      */
     @Lob
-    @Column(length = 1000, columnDefinition = "clob", nullable = false, updatable = true, insertable = true)
+    @Column(length = 1000, nullable = false, updatable = true, insertable = true)
     private String noteContent;
 
     /**

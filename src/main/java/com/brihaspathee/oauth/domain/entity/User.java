@@ -52,7 +52,7 @@ public class User implements UserDetails {
      * in the database as a VARCHAR type with a maximum length of 100 characters.
      * The password is both insertable and updatable.
      */
-    @Column(name = "password", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
+
     private String password;
 
     /**
@@ -141,25 +141,11 @@ public class User implements UserDetails {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Retrieves the password of the user.
-     *
-     * @return the password of the user as a String.
-     */
-    @Override
-    public String getPassword() {
-        return "";
-    }
-
-    /**
-     * Retrieves the username of the user.
-     *
-     * @return the username of the user as a String.
-     */
     @Override
     public String getUsername() {
-        return "";
+        return this.email;
     }
+
 
     /**
      * Checks if the user account is not expired.

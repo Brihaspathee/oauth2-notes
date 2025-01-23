@@ -2,7 +2,10 @@ package com.brihaspathee.oauth.domain.repository;
 
 import com.brihaspathee.oauth.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,7 +25,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param email the email address of the user to retrieve
      * @return an Optional containing the user if found, or an empty Optional if no user exists with the given email
      */
-    Optional<User> findUserByEmail(String email);
+//    // @Query("SELECT u FROM User u WHERE u.email = :email")
+//    @Query(value = "SELECT * FROM SECURITY_USER WHERE email = :email", nativeQuery = true)
+    Optional<User> findUserByEmail(@Param("email") String email);
+//
+//    @Query(value = "SELECT * FROM SECURITY_USER WHERE email = :email", nativeQuery = true)
+//    Map<String, Object> findRawByEmail(@Param("email") String email);
 
     Optional<User> findUserByGithubId(String githubId);
 }

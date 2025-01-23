@@ -18,8 +18,11 @@ spring:
       client:
         registration:
           github:
-            client-id: Ov23libw8ZK2MNnjaHA4
-            client-secret: 27aee3a53a7aa6a3fee43e682720ffd2ba420915
+            client-id: Ov23liW4reSGtjkJtEzc
+            client-secret: 707fb1d72762733edf5c86d9fa1b2b476c922e09
+            scope:
+              - read:user
+              - user:email
 logging:
   level:
     org:

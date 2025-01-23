@@ -1,5 +1,7 @@
 package com.brihaspathee.oauth.controller;
 
+import com.brihaspathee.oauth.permissions.AuthorityCreatePermission;
+import com.brihaspathee.oauth.permissions.NoteCreatePermission;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,7 +36,14 @@ public class WelcomeController {
      * @return ResponseEntity containing a success response with a secured welcome message.
      */
     @GetMapping("/secured")
+    @AuthorityCreatePermission
     public ResponseEntity<String> securedWelcome() {
         return ResponseEntity.ok("Welcome to Oauth2 Secured Notes");
+    }
+
+    @GetMapping("/create-note")
+    @NoteCreatePermission
+    public ResponseEntity<String> securedNoteCreation() {
+        return ResponseEntity.ok("Welcome to creating notes securely");
     }
 }
