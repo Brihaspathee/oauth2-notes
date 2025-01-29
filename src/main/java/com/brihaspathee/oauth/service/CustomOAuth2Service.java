@@ -1,7 +1,9 @@
 package com.brihaspathee.oauth.service;
 
+import com.brihaspathee.oauth.domain.entity.AuthGithub;
 import com.brihaspathee.oauth.domain.entity.Role;
 import com.brihaspathee.oauth.domain.entity.User;
+import com.brihaspathee.oauth.domain.repository.AuthGithubRepository;
 import com.brihaspathee.oauth.domain.repository.RoleRepository;
 import com.brihaspathee.oauth.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +39,11 @@ public class CustomOAuth2Service extends DefaultOAuth2UserService {
 
     private final RoleRepository roleRepository;
 
+    private final AuthGithubRepository authGithubRepository;
+
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        log.info("Loading user for registration");
         log.info("User request:{}", userRequest);
         OAuth2User oAuth2User = super.loadUser(userRequest);
         log.info("Loaded user: {}", oAuth2User.getAttributes());
@@ -49,24 +54,29 @@ public class CustomOAuth2Service extends DefaultOAuth2UserService {
         log.info("Github id: {}, email: {}, github login: {}, avatar url: {}", githubId, email, githubLogin, avatarUrl);
         if (email == null) {
             email = fetchEmailFromGitHub(userRequest);
+            log.info("Fetched email from github: {}", email);
             if (email == null) {
                 throw new RuntimeException("Email not found from github");
             }
         }
 
         // check if the user is an existing user
-        User existingUser = userRepository.findUserByGithubId(githubId).orElse(null);
-        if (existingUser != null) {
-            List<GrantedAuthority> authorities = existingUser.getRoles().stream()
-                    .map(Role::getAuthorities)
-                    .flatMap(Set::stream)
-                    .map(authority ->
-                            new SimpleGrantedAuthority(authority.getPermission()))
-                    .collect(Collectors.toList());
-            DefaultOAuth2User defaultOAuth2User = new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "id");
-            log.info("Existing User Authorities: {}", defaultOAuth2User.getAuthorities());
-            return defaultOAuth2User;
+        AuthGithub authGithub = authGithubRepository.findByGithubId(githubId).orElse(null);
+        if(authGithub != null){
+            User existingUser = userRepository.findById(authGithub.getUserId()).orElse(null);
+            if (existingUser != null) {
+                List<GrantedAuthority> authorities = existingUser.getRoles().stream()
+                        .map(Role::getAuthorities)
+                        .flatMap(Set::stream)
+                        .map(authority ->
+                                new SimpleGrantedAuthority(authority.getPermission()))
+                        .collect(Collectors.toList());
+                DefaultOAuth2User defaultOAuth2User = new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "id");
+                log.info("Existing User Authorities: {}", defaultOAuth2User.getAuthorities());
+                return defaultOAuth2User;
+            }
         }
+
         // Check if email exists for another auth method
         User emailUser = userRepository.findUserByEmail(email).orElse(null);
         if (emailUser != null && !emailUser.getAuthenticationMethod().equals("GITHUB")) {
@@ -77,18 +87,22 @@ public class CustomOAuth2Service extends DefaultOAuth2UserService {
         Role role = roleRepository.findById(2002L).orElseThrow(() -> new RuntimeException("Role not found"));
         User newUser = User.builder()
                 .email(email)
-                .githubId(githubId)
-                .githubLogin(githubLogin)
-                .githubAvatarUrl(avatarUrl)
                 .authenticationMethod("GITHUB")
                 .role(role)
                 .build();
-        userRepository.save(newUser);
+        newUser = userRepository.save(newUser);
+        AuthGithub newAuthGithub = AuthGithub.builder()
+                .userId(newUser.getUserId())
+                .githubId(githubId)
+                .githubLogin(githubLogin)
+                .githubAvatarUrl(avatarUrl)
+                .build();
+        authGithubRepository.save(newAuthGithub);
         List<GrantedAuthority> authorities = role.getAuthorities().stream()
                 .map(authority ->
                         new SimpleGrantedAuthority(authority.getPermission()))
                 .collect(Collectors.toList());
-        DefaultOAuth2User defaultOAuth2User = new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "email");
+        DefaultOAuth2User defaultOAuth2User = new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "id");
         log.info("User Authorities: {}", defaultOAuth2User.getAuthorities());
         return defaultOAuth2User;
     }

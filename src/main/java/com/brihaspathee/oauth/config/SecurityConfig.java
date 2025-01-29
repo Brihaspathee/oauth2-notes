@@ -1,5 +1,6 @@
 package com.brihaspathee.oauth.config;
 
+import com.brihaspathee.oauth.service.CustomOAuth2Service;
 import com.brihaspathee.oauth.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -16,9 +17,27 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created in Intellij IDEA
@@ -36,10 +55,13 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
-            "/api/v1/oauth2/welcome"
+            "/api/v1/oauth2/welcome",
+            "/login/oauth2/code/**"
     };
 
     private final CustomUserDetailsService customUserDetailsService;
+
+    private final CustomOAuth2Service  customOAuth2Service;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration
@@ -65,10 +87,19 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .csrf(AbstractHttpConfigurer::disable)  // .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults())
-//                .sessionManagement(sessionManagement ->
-//                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sessionManagement ->
+                {
+                    try {
+                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                                .and().securityContext().securityContextRepository(new HttpSessionSecurityContextRepository());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .formLogin(Customizer.withDefaults())
-                .oauth2Login(Customizer.withDefaults());
+                .oauth2Login(oauth2 ->
+                        oauth2.userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2Service)));
         return http.build();
 
     }
@@ -77,5 +108,51 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
+        DefaultOAuth2UserService defaultOAuth2UserService = new DefaultOAuth2UserService();
+        OidcUserService oidcUserService = new OidcUserService();
+
+        return userRequest -> {
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
+
+            // Check if this is an OIDC (OpenID Connect) provider
+            if ("google".equals(registrationId)) {
+                if (userRequest instanceof OidcUserRequest oidcUserRequest) {
+                    OidcUser oidcUser = oidcUserService.loadUser(oidcUserRequest);
+
+//                    // Add custom authorities for Google users
+//                    Set<GrantedAuthority> authorities = new HashSet<>(oidcUser.getAuthorities());
+//                    authorities.add(new SimpleGrantedAuthority("note.create"));
+
+//                    return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
+                    return oidcUser;
+                } else {
+                    throw new IllegalArgumentException("Expected OidcUserRequest for Google, but got OAuth2UserRequest.");
+                }
+            }
+
+            // Handle non-OIDC providers (e.g., GitHub)
+            OAuth2User oAuth2User = defaultOAuth2UserService.loadUser(userRequest);
+            Set<GrantedAuthority> authorities = new HashSet<>(oAuth2User.getAuthorities());
+            authorities.add(new SimpleGrantedAuthority("note.create"));
+
+            return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "id");
+        };
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("https://oauth.pstmn.io");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
 
 }

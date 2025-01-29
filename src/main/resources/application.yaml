@@ -23,8 +23,14 @@ spring:
             scope:
               - read:user
               - user:email
+          google:
+            client-id: 745408653882-2pu9nuv0134bq6mfkoguj1fj8oqs84u4.apps.googleusercontent.com
+            client-secret: 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
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
 logging:
   level:
     org:
       springframework:
         security: TRACE
+        security.oauth2: DEBUG
+        web.context.request: DEBUG

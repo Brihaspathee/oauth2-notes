@@ -64,32 +64,63 @@ public class User implements UserDetails {
     @Column(name = "auth_method", nullable = false, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
     private String authenticationMethod;
 
-    /**
-     * Represents the GitHub ID of a user.
-     * This field is stored in the database with the column name "github_id".
-     * The value is a non-null, immutable string with a maximum length of 100 characters.
-     * This is intended to uniquely identify the user's GitHub account associated with the application.
-     */
-    @Column(name = "github_id", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
-    private String githubId;
+//    /**
+//     * Represents the GitHub ID of a user.
+//     * This field is stored in the database with the column name "github_id".
+//     * The value is a non-null, immutable string with a maximum length of 100 characters.
+//     * This is intended to uniquely identify the user's GitHub account associated with the application.
+//     */
+//    @Column(name = "github_id", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String githubId;
+//
+//    /**
+//     * Represents the GitHub login identifier for a user.
+//     * This field is mapped to the "github_login" column in the database.
+//     * The GitHub login is required, cannot be modified once set, and must be inserted at the time of creation.
+//     * The maximum length for this field is 100 characters.
+//     */
+//    @Column(name = "github_login", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String githubLogin;
+//
+//    /**
+//     * Represents the URL of the user's GitHub avatar.
+//     * This field is used to store the link to the avatar image associated
+//     * with the user's GitHub account, enabling integration with external systems
+//     * or rendering the user's profile picture in the application.
+//     */
+//    @Column(name = "github_avatar_url", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String githubAvatarUrl;
+//
+//    /**
+//     * Represents the Google ID associated with a user. This field is stored as a
+//     * VARCHAR in the database with a maximum length of 100 characters.
+//     *
+//     * - The value can be null, indicating that the user may not have a Google ID associated.
+//     * - This field is non-updatable to ensure consistency with the initial association.
+//     * - The field is insertable, allowing its value to be set upon user creation.
+//     */
+//    @Column(name = "google_id", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String googleId;
+//
+//    /**
+//     * Represents the name associated with a Google account.
+//     *
+//     * This field is mapped to the "google_name" column in the database.
+//     * It is optional (nullable = true), and its value cannot be updated after creation (updatable = false).
+//     * Insertable to the database when creating a new record.
+//     * The column is defined as a VARCHAR with a maximum length of 100 characters.
+//     */
+//    @Column(name = "google_name", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String googleName;
+//
+//    /**
+//     * Represents the URL of the user's profile picture as retrieved from Google.
+//     * This field is optional and can store up to 100 characters.
+//     * It is both insertable and updatable in the database.
+//     */
+//    @Column(name = "google_picture_url", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
+//    private String googlePictureUrl;
 
-    /**
-     * Represents the GitHub login identifier for a user.
-     * This field is mapped to the "github_login" column in the database.
-     * The GitHub login is required, cannot be modified once set, and must be inserted at the time of creation.
-     * The maximum length for this field is 100 characters.
-     */
-    @Column(name = "github_login", nullable = true, updatable = false, insertable = true, columnDefinition = "varchar", length = 100)
-    private String githubLogin;
-
-    /**
-     * Represents the URL of the user's GitHub avatar.
-     * This field is used to store the link to the avatar image associated
-     * with the user's GitHub account, enabling integration with external systems
-     * or rendering the user's profile picture in the application.
-     */
-    @Column(name = "github_avatar_url", nullable = true, updatable = true, insertable = true, columnDefinition = "varchar", length = 100)
-    private String githubAvatarUrl;
 
     /**
      * Represents the roles assigned to a user in a many-to-many relationship.
@@ -198,11 +229,7 @@ public class User implements UserDetails {
         return "User{" +
                 "id=" + userId +
                 ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
                 ", authenticationMethod='" + authenticationMethod + '\'' +
-                ", githubId='" + githubId + '\'' +
-                ", githubLogin='" + githubLogin + '\'' +
-                ", githubAvatarUrl='" + githubAvatarUrl + '\'' +
                 '}';
     }
 }

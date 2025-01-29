@@ -7,6 +7,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,11 +30,12 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/login/oauth2/code/github")
+//@RequestMapping("/login/oauth2/code")
 public class RedirectController {
 
-    @GetMapping
+    @GetMapping("/github")
     public void handleCallback(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        log.info("Handling callback from GitHub");
         // Step 1: Extract parameters from the callback request
         String authorizationCode = request.getParameter("code");
         String state = request.getParameter("state"); // Contains either the original URL or "postman"
@@ -83,6 +86,76 @@ public class RedirectController {
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     "https://github.com/login/oauth/access_token", entity, Map.class
+            );
+
+            // Parse the response to extract the access token
+            Map<String, String> responseBody = response.getBody();
+            if (responseBody != null) {
+                return responseBody.get("access_token");
+            } else {
+                throw new RuntimeException("Failed to retrieve access token");
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while fetching access token: " + ex.getMessage(), ex);
+        }
+    }
+
+
+    @GetMapping("/google")
+    public void handleGoogleCallback(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        log.info("Handling callback from Google");
+
+        // Step 1: Extract parameters from the callback request
+        String authorizationCode = request.getParameter("code");
+        String state = request.getParameter("state"); // Contains either the original URL or "postman"
+
+        if (authorizationCode == null || state == null) {
+            throw new RuntimeException("Missing authorization code or state parameter");
+        }
+
+        // Step 2: Exchange authorization code for access token
+        String accessToken = fetchGoogleAccessToken(authorizationCode);
+
+        // Step 3: Handle Postman callback
+        if ("postman".equals(state)) {
+            // Redirect back to Postman’s callback URL
+            response.sendRedirect("https://oauth.pstmn.io/v1/callback?access_token=" + accessToken);
+            return;
+        }
+
+        // Step 4: Validate the state (for security and to handle application-specific requests)
+        if (!state.startsWith("http://localhost:8080")) { // Update this to match your application's domain
+            throw new SecurityException("Invalid redirect URL in state parameter");
+        }
+
+        // Step 5: Store the access token (optional)
+        // Store the access token in a session or database for later use
+        request.getSession().setAttribute("googleAccessToken", accessToken);
+
+        // Step 6: Redirect the user to their originally requested URL
+        response.sendRedirect(state);
+    }
+
+    // Helper Method: Fetch access token from Google
+    private String fetchGoogleAccessToken(String authorizationCode) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+        MultiValueMap<String, String> tokenRequest = new LinkedMultiValueMap<>();
+        tokenRequest.add("client_id", "745408653882-2pu9nuv0134bq6mfkoguj1fj8oqs84u4.apps.googleusercontent.com");
+        tokenRequest.add("client_secret", "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");
+        tokenRequest.add("code", authorizationCode);
+        tokenRequest.add("grant_type", "authorization_code");
+        tokenRequest.add("redirect_uri", "http://localhost:8080/login/oauth2/code/google"); // Match the redirect URI registered in Google Console
+
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(tokenRequest, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    "https://oauth2.googleapis.com/token", entity, Map.class
             );
 
             // Parse the response to extract the access token

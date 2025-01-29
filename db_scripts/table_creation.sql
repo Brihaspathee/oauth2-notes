@@ -2,6 +2,8 @@ drop table if exists `oauth2notesdb`.`profile`;
 drop table if exists `oauth2notesdb`.`note`;
 drop table if exists `oauth2notesdb`.`user_role`;
 drop table if exists `oauth2notesdb`.`role_authority`;
+drop table if exists `oauth2notesdb`.`auth_github`;
+drop table if exists `oauth2notesdb`.`auth_google`;
 drop table if exists `oauth2notesdb`.`security_user`;
 drop table if exists `oauth2notesdb`.`role`;
 drop table if exists `oauth2notesdb`.`authority`;
@@ -22,18 +24,35 @@ CREATE TABLE `oauth2notesdb`.`security_user` (
                                                  email varchar(100) NOT NULL COMMENT 'Email id of the user, it is also the username',
                                                  password varchar(100) NULL COMMENT 'Password of the user account',
                                                  auth_method varchar(100) NULL COMMENT 'Authentication method for the user account',
-                                                 github_id varchar(100) NULL COMMENT 'The github id of the user',
-                                                 github_login varchar(100) NULL COMMENT 'The github login id of the user',
-                                                 github_avatar_url varchar(100) NULL COMMENT 'The github avatar url of the user',
                                                  CONSTRAINT security_user_pk PRIMARY KEY (user_id),
-                                                 CONSTRAINT security_user_unique UNIQUE KEY (email),
-                                                 CONSTRAINT security_user_github_id UNIQUE KEY (github_id),
-                                                 CONSTRAINT security_user_github_login UNIQUE KEY (github_login)
+                                                 CONSTRAINT security_user_unique UNIQUE KEY (email)
 )
     ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci
 COMMENT='List of users';
+-- oauth2notesdb.auth_github definition
+
+CREATE TABLE `auth_github` (
+                               `auth_github_id` bigint NOT NULL COMMENT 'The primary key of the table',
+                               `github_id` varchar(100) NOT NULL COMMENT 'The github id of the user',
+                               `github_login` varchar(100) NOT NULL COMMENT 'The github login id',
+                               `github_avatar_url` varchar(100) NOT NULL COMMENT 'The github user avatar URL',
+                               `user_id` bigint NOT NULL COMMENT 'The user id of the user to who the github is associated',
+                               PRIMARY KEY (`auth_github_id`),
+                               KEY `auth_github_security_user_FK` (`user_id`),
+                               CONSTRAINT `auth_github_security_user_FK` FOREIGN KEY (`user_id`) REFERENCES `security_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- oauth2notesdb.auth_google definition
+
+CREATE TABLE `auth_google` (
+                               `auth_google_id` bigint NOT NULL COMMENT 'The primary key of the table',
+                               `user_id` bigint NOT NULL COMMENT 'The user to whom the google account belongs',
+                               `google_id` varchar(100) NOT NULL COMMENT 'The unique google id',
+                               `google_name` varchar(100) NOT NULL COMMENT 'The name of the user in google',
+                               `google_picture_url` varchar(100) DEFAULT NULL COMMENT 'The URL of the user''s picture in google',
+                               PRIMARY KEY (`auth_google_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS `oauth2notesdb`.`user_role` (
                                                            `user_id` BIGINT NOT NULL COMMENT 'User id that is mapped to the role',
                                                            `role_id` BIGINT NOT NULL COMMENT 'Role that is mapped to the user',

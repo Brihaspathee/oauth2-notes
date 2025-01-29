@@ -74,12 +74,12 @@ INSERT INTO oauth2notesdb.role_authority(role_id, authority_id) VALUES (2003, 10
 -- Users
 
 INSERT INTO oauth2notesdb.security_user
-(user_id, email, password, auth_method, github_id, github_login, github_avatar_url)
-VALUES(3001, 'john.doe@admins.com', '$2a$10$q15whOtuMFuQIWqRNzzLzezI7.DURBkOL773py64tMdf6DN.x8IgG', 'EMAIL', null, null, null);
+(user_id, email, password, auth_method)
+VALUES(3001, 'john.doe@admins.com', '$2a$10$q15whOtuMFuQIWqRNzzLzezI7.DURBkOL773py64tMdf6DN.x8IgG', 'EMAIL');
 
 INSERT INTO oauth2notesdb.security_user
-(user_id, email, password, auth_method, github_id, github_login, github_avatar_url)
-VALUES(3002, 'mary.doe@customerrep.com', '$2a$10$vTh8UGPShOV1CTungBEC4.vC16cyxyxIXcmGAg4xqDGuyQAbkSiby', 'EMAIL', null, null, null);
+(user_id, email, password, auth_method)
+VALUES(3002, 'mary.doe@customerrep.com', '$2a$10$vTh8UGPShOV1CTungBEC4.vC16cyxyxIXcmGAg4xqDGuyQAbkSiby', 'EMAIL');
 
 -- User Role Relationship
 INSERT INTO oauth2notesdb.user_role(user_id, role_id) VALUES (3001, 2001);
