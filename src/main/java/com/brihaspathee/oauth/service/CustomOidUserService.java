@@ -40,16 +40,50 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomOidUserService extends OidcUserService {
 
+    /**
+     * Represents a repository for managing user-related data operations.
+     * This variable is a final instance of {@link UserRepository}, ensuring
+     * that it cannot be reassigned after initialization.
+     * It is used for performing various operations such as retrieving,
+     * saving, updating, or deleting user data in the application.
+     */
     private final UserRepository userRepository;
 
+    /**
+     * Repository for accessing and managing role-related data.
+     * This variable serves as the interface to the underlying data store
+     * for operations such as retrieving, saving, and updating roles.
+     * It abstracts the data access layer to enable easier interaction with role entities.
+     */
     private final RoleRepository roleRepository;
 
+    /**
+     * The authGoogleRepository is a private final instance of AuthGoogleRepository.
+     * It is used to handle Google authentication-related operations and interactions
+     * with the associated repository layer. This instance is immutable and ensures
+     * consistent access to authentication methods provided by AuthGoogleRepository.
+     */
     private final AuthGoogleRepository authGoogleRepository;
 
+    /**
+     * Loads the user by processing the {@code OidcUserRequest} and creates an {@code OidcUser}
+     * instance either for an existing user or a new user based on the request. It also handles
+     * user role assignment and authentication details.
+     *
+     * @param userRequest the OpenID Connect user request containing user information and tokens
+     *        provided by the identity provider
+     * @return an {@code OidcUser} instance representing the authenticated user, complete with
+     *         roles, permissions, and user information
+     * @throws OAuth2AuthenticationException if an error occurs during the authentication process
+     *        or if the email is already used with another authentication method
+     */
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException{
         log.info("Inside CustomOidUserService");
         log.info("User request:{}", userRequest);
+        /*
+        * Load the OIDC user based on the user request
+         */
         OidcUser oidcUser = super.loadUser(userRequest);
         log.info("oidcUser:{}", oidcUser);
         log.info("User email:{}", oidcUser.getEmail());
@@ -62,6 +96,9 @@ public class CustomOidUserService extends OidcUserService {
         log.info("User Last Name:{}", oidcUser.getAttributes().get("family_name"));
         log.info("User picture:{}", oidcUser.getAttributes().get("picture"));
 
+        /*
+         * Get the user profile data from the user data retrieved from Google
+         */
         String googleId = oidcUser.getName();
         String email = oidcUser.getEmail();
         String googlePicture = oidcUser.getAttributes().get("picture").toString();
@@ -70,34 +107,57 @@ public class CustomOidUserService extends OidcUserService {
         // check if the user is an existing user
         AuthGoogle authGoogle = authGoogleRepository.findByGoogleId(googleId).orElse(null);
         if(authGoogle != null){
+            /*
+            * If the user already exist, get the user information from the DB
+             */
             User existingUser = userRepository.findById(authGoogle.getUserId()).orElse(null);
             if (existingUser != null) {
+                /*
+                * Get the authorities of the user
+                 */
                 List<GrantedAuthority> authorities = existingUser.getRoles().stream()
                         .map(Role::getAuthorities)
                         .flatMap(Set::stream)
                         .map(authority ->
                                 new SimpleGrantedAuthority(authority.getPermission()))
                         .collect(Collectors.toList());
+                /*
+                * Construct the OIDC User info
+                 */
                 OidcUserInfo oidcUserInfo = getOidcUserInfo(email, name, oidcUser, googlePicture);
+                /*
+                * Construct the default OIDC user
+                 */
                 DefaultOidcUser defaultOidcUser = new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUserInfo);
                 log.info("Existing User Authorities: {}", defaultOidcUser.getAuthorities());
                 return defaultOidcUser;
             }
         }
 
-        // Check if email exists for another auth method
+        /*
+        * If the user has not authenticated using Google, check if the email is already used
+         */
         User emailUser = userRepository.findUserByEmail(email).orElse(null);
+        /*
+        * If the email is already used by another authentication method then generate an exception
+         */
         if (emailUser != null && !emailUser.getAuthenticationMethod().equals("GOOGLE")) {
             throw new RuntimeException("Email already used with email/password based authentication");
         }
-        // Create new user
-        // First get the role that needs to be assigned to the new user
+        /*
+        * Create new user
+        * First get the role that needs to be assigned to the new user
+        * The role for these users is "USER"
+         */
         Role role = roleRepository.findById(2002L).orElseThrow(() -> new RuntimeException("Role not found"));
         User newUser = User.builder()
                 .email(email)
                 .authenticationMethod("GOOGLE")
                 .role(role)
                 .build();
+        /*
+        * Save the user
+         */
         newUser = userRepository.save(newUser);
         AuthGoogle newAuthGoogle = AuthGoogle.builder()
                 .userId(newUser.getUserId())
@@ -106,6 +166,9 @@ public class CustomOidUserService extends OidcUserService {
                 .googlePictureUrl(googlePicture)
                 .build();
         authGoogleRepository.save(newAuthGoogle);
+        /*
+        * Get all the authorities of the user and construct the default OIDC user
+         */
         List<GrantedAuthority> authorities = role.getAuthorities().stream()
                 .map(authority ->
                         new SimpleGrantedAuthority(authority.getPermission()))
@@ -116,6 +179,16 @@ public class CustomOidUserService extends OidcUserService {
         return defaultOidcUser;
     }
 
+    /**
+     * Constructs an OidcUserInfo object containing user information claims such as email, name,
+     * given name, family name, and picture extracted from the provided inputs.
+     *
+     * @param email the email address of the user
+     * @param name the full name of the user
+     * @param oidcUser the source OIDC user object containing additional attributes
+     * @param googlePicture the URL of the user's profile picture
+     * @return an OidcUserInfo object populated with the specified claims
+     */
     private static OidcUserInfo getOidcUserInfo(String email, String name, OidcUser oidcUser, String googlePicture) {
         Map<String, Object> userInfoClaims = new HashMap<>();
         userInfoClaims.put("email", email);
